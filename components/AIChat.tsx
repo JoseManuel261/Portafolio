@@ -90,7 +90,7 @@ export default function AIChat() {
       {/* Chat window - responsive */}
       {open && (
         <div className="fixed z-50 bg-[var(--bg)] border border-[var(--border)] shadow-xl flex flex-col
-          bottom-18 right-5 w-[calc(100vw-40px)] max-w-sm
+          bottom-16 right-5 w-[calc(100vw-40px)] max-w-sm
           sm:w-80 sm:bottom-20 sm:right-5"
           style={{ height: '380px' }}>
 
