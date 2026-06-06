@@ -1,11 +1,37 @@
 -- =============================================
--- ESQUEMA DE BASE DE DATOS - PORTAFOLIO
+-- ESQUEMA DE BASE DE DATOS - PORTAFOLIO HUB
 -- Ejecutar en: Supabase Dashboard → SQL Editor
 -- =============================================
 
--- Tabla de proyectos
+-- ══════════════════════════════════════════════
+-- EXTENSIONES
+-- ══════════════════════════════════════════════
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- ══════════════════════════════════════════════
+-- TABLA: profiles
+-- ══════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  username TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  title TEXT NOT NULL DEFAULT 'Desarrollador',
+  bio TEXT DEFAULT '',
+  email TEXT,
+  github_url TEXT,
+  linkedin_url TEXT,
+  location TEXT DEFAULT '',
+  skills TEXT[] DEFAULT '{}',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ══════════════════════════════════════════════
+-- TABLA: projects
+-- ══════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS projects (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   description TEXT NOT NULL,
   long_description TEXT,
@@ -19,74 +45,74 @@ CREATE TABLE IF NOT EXISTS projects (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Tabla de perfil (solo 1 fila)
-CREATE TABLE IF NOT EXISTS profiles (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  name TEXT NOT NULL,
-  title TEXT NOT NULL,
-  bio TEXT,
-  email TEXT,
-  github_url TEXT,
-  linkedin_url TEXT,
-  location TEXT,
-  skills TEXT[] DEFAULT '{}',
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
+-- ══════════════════════════════════════════════
 -- RLS (Row Level Security)
-ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
+-- ══════════════════════════════════════════════
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
 
--- Policies: lectura pública
+-- ── Lectura pública ──
+CREATE POLICY "Perfiles visibles para todos"
+  ON profiles FOR SELECT
+  USING (true);
+
 CREATE POLICY "Proyectos visibles para todos"
   ON projects FOR SELECT
   USING (true);
 
-CREATE POLICY "Perfil visible para todos"
-  ON profiles FOR SELECT
-  USING (true);
+-- ── Insert: solo autenticado ──
+CREATE POLICY "Usuario puede insertar su perfil"
+  ON profiles FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = id);
 
--- Policies: escritura solo para usuario autenticado
-CREATE POLICY "Solo admin puede insertar proyectos"
+CREATE POLICY "Usuario puede insertar proyectos"
   ON projects FOR INSERT
   TO authenticated
-  WITH CHECK (true);
+  WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Solo admin puede actualizar proyectos"
-  ON projects FOR UPDATE
-  TO authenticated
-  USING (true);
-
-CREATE POLICY "Solo admin puede eliminar proyectos"
-  ON projects FOR DELETE
-  TO authenticated
-  USING (true);
-
-CREATE POLICY "Solo admin puede actualizar perfil"
+-- ── Update: solo dueño ──
+CREATE POLICY "Usuario puede actualizar su perfil"
   ON profiles FOR UPDATE
   TO authenticated
-  USING (true);
+  USING (auth.uid() = id);
 
--- Perfil inicial (reemplaza los datos con los tuyos)
-INSERT INTO profiles (name, title, bio, email, github_url, linkedin_url, location, skills)
-VALUES (
-  'Joselin',
-  'Software Engineering Student',
-  'Estudiante de Ingeniería de Software en FET Neiva, apasionada por el desarrollo web, IoT, 3D y el diseño de experiencias digitales.',
-  'tu@email.com',
-  'https://github.com/tu_usuario',
-  'https://linkedin.com/in/tu_usuario',
-  'Neiva, Huila, Colombia',
-  ARRAY['React', 'Next.js', 'TypeScript', 'Python', 'Unity', 'Blender', 'MongoDB', 'PostgreSQL', 'Arduino', 'GNS3']
-);
+CREATE POLICY "Usuario puede actualizar sus proyectos"
+  ON projects FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = user_id);
 
--- Proyecto de ejemplo
-INSERT INTO projects (title, description, long_description, tags, status, featured)
-VALUES (
-  'TNT Tag Multiplayer',
-  'Minijuego LAN multijugador construido en Unity con Mirror Networking.',
-  'Juego multijugador en red local desarrollado desde cero en Unity usando Mirror Networking, ParrelSync, modelos Mixamo y personajes NPC creados en Blender.',
-  ARRAY['Unity', 'C#', 'Mirror Networking', 'Blender'],
-  'completed',
-  true
-);
+-- ── Delete: solo dueño ──
+CREATE POLICY "Usuario puede eliminar sus proyectos"
+  ON projects FOR DELETE
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+-- ══════════════════════════════════════════════
+-- FUNCIÓN: Obtener perfil por username
+-- ══════════════════════════════════════════════
+CREATE OR REPLACE FUNCTION get_profile_by_username(p_username TEXT)
+RETURNS SETOF profiles
+LANGUAGE sql STABLE
+AS $$
+  SELECT * FROM profiles WHERE username = p_username LIMIT 1;
+$$;
+
+-- ══════════════════════════════════════════════
+-- PERFIL INICIAL: Joselin (ejemplo)
+-- ══════════════════════════════════════════════
+-- Primero necesitas crear un usuario en Authentication,
+-- luego reemplaza 'REEMPLAZA_CON_USER_UUID' con su ID.
+-- INSERT INTO profiles (id, username, name, title, bio, email, github_url, linkedin_url, location, skills)
+-- VALUES (
+--   'REEMPLAZA_CON_USER_UUID', -- El UUID del usuario en auth.users
+--   'joselin',
+--   'Joselin',
+--   'Software Engineering Student',
+--   'Estudiante de Ingeniería de Software en FET Neiva, apasionada por el desarrollo web, IoT, 3D y el diseño de experiencias digitales.',
+--   'tu@email.com',
+--   'https://github.com/tu_usuario',
+--   'https://linkedin.com/in/tu_usuario',
+--   'Neiva, Huila, Colombia',
+--   ARRAY['React', 'Next.js', 'TypeScript', 'Python', 'Unity', 'Blender', 'MongoDB', 'PostgreSQL', 'Arduino', 'GNS3']
+-- );
