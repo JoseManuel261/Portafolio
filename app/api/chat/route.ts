@@ -63,37 +63,30 @@ export async function POST(req: NextRequest) {
   try {
     const { messages } = await req.json()
 
-    const apiKey = process.env.GEMINI_API_KEY
+    const apiKey = process.env.GROQ_API_KEY
     if (!apiKey) {
       return NextResponse.json({ reply: 'El asistente no está configurado aún.', showCV: false })
     }
 
-    // Build conversation for Gemini
-    const contents = messages.map((m: any) => ({
-      role: m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: m.content }]
-    }))
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-          contents,
-          generationConfig: {
-            maxOutputTokens: 300,
-            temperature: 0.7,
-          }
-        })
-      }
-    )
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-8b-instant',
+        max_tokens: 300,
+        temperature: 0.7,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          ...messages.map((m: any) => ({ role: m.role, content: m.content }))
+        ],
+      }),
+    })
 
     const data = await response.json()
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}'
-
-    // Clean potential markdown from response
+    const text = data.choices?.[0]?.message?.content ?? '{}'
     const clean = text.replace(/```json|```/g, '').trim()
 
     try {
@@ -102,7 +95,7 @@ export async function POST(req: NextRequest) {
     } catch {
       return NextResponse.json({ reply: clean, showCV: false })
     }
-  } catch (err) {
+  } catch {
     return NextResponse.json({ reply: 'Error al procesar la solicitud.', showCV: false })
   }
 }
