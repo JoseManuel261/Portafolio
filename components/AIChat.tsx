@@ -93,7 +93,7 @@ export default function AIChat() {
 
       {/* Chat window */}
       {open && (
-        <div className="fixed bottom-22 right-6 z-50 w-80 bg-[var(--bg)] border border-[var(--border)] shadow-xl flex flex-col"
+        <div className="fixed bottom-20 right-6 z-50 w-80 bg-[var(--bg)] border border-[var(--border)] shadow-xl flex flex-col"
           style={{ height: '420px' }}>
           {/* Header */}
           <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between">
