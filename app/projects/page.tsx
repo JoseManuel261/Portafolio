@@ -1,151 +1,243 @@
-'use client'
-import { useState, useEffect } from 'react'
 import Nav from '@/components/Nav'
 import ProjectCard from '@/components/ProjectCard'
-import { supabase, type Project } from '@/lib/supabase'
-import { Search, Filter } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
+import { Github, Linkedin, Mail, MapPin, ArrowRight, ExternalLink } from 'lucide-react'
+import Link from 'next/link'
+import Image from 'next/image'
 
-const statusOptions = [
-  { value: 'all', label: 'Todos' },
-  { value: 'completed', label: 'Completados' },
-  { value: 'in-progress', label: 'En progreso' },
-  { value: 'archived', label: 'Archivados' },
-]
+export const revalidate = 0
 
-export default function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>([])
-  const [filtered, setFiltered] = useState<Project[]>([])
-  const [search, setSearch] = useState('')
-  const [status, setStatus] = useState('all')
-  const [selectedTag, setSelectedTag] = useState('all')
-  const [loading, setLoading] = useState(true)
-  const [allTags, setAllTags] = useState<string[]>([])
+async function getFeaturedProjects() {
+  const { data } = await supabase
+    .from('projects').select('*').eq('featured', true)
+    .order('created_at', { ascending: false }).limit(3)
+  return data ?? []
+}
 
-  useEffect(() => {
-    async function load() {
-      const { data } = await supabase
-        .from('projects')
-        .select('*')
-        .order('created_at', { ascending: false })
-      const list = data ?? []
-      setProjects(list)
-      setFiltered(list)
-      const tags = Array.from(new Set(list.flatMap((p: Project) => p.tags ?? [])))
-      setAllTags(tags as string[])
-      setLoading(false)
-    }
-    load()
-  }, [])
+async function getProfile() {
+  const { data } = await supabase.from('profiles').select('*').single()
+  return data
+}
 
-  useEffect(() => {
-    let result = projects
-    if (status !== 'all') result = result.filter((p) => p.status === status)
-    if (selectedTag !== 'all') result = result.filter((p) => p.tags?.includes(selectedTag))
-    if (search.trim()) {
-      const q = search.toLowerCase()
-      result = result.filter(
-        (p) =>
-          p.title.toLowerCase().includes(q) ||
-          p.description.toLowerCase().includes(q) ||
-          p.tags?.some((t) => t.toLowerCase().includes(q))
-      )
-    }
-    setFiltered(result)
-  }, [projects, status, selectedTag, search])
+function AnimatedName({ name }: { name: string }) {
+  const words = name.split(' ')
+  let charIndex = 0
+  return (
+    <h1 className="font-display leading-[0.95] tracking-tight mb-5">
+      {words.map((word, wi) => (
+        <span key={wi} className="block overflow-hidden">
+          <span className="block" style={{ animationDelay: `${wi * 0.12}s` }}>
+            {word.split('').map((char, ci) => {
+              const delay = (charIndex++ * 0.03) + 0.1
+              return (
+                <span key={ci} className="name-char"
+                  style={{
+                    animationDelay: `${delay}s`,
+                    fontSize: wi === 0 ? 'clamp(3rem, 8vw, 6rem)' : 'clamp(2rem, 5vw, 4rem)'
+                  }}>
+                  {char}
+                </span>
+              )
+            })}
+          </span>
+        </span>
+      ))}
+    </h1>
+  )
+}
+
+export default async function Home() {
+  const [projects, profile] = await Promise.all([getFeaturedProjects(), getProfile()])
+
+  const name = profile?.name ?? 'Jose Manuel Ossa'
+  const title = profile?.title ?? 'Software Engineering Student'
+  const bio = profile?.bio ?? 'Estudiante de Ingeniería de Software en FET Neiva. Construyo cosas para la web, IoT y mundos 3D.'
+  const skills = profile?.skills ?? ['React', 'Next.js', 'Python', 'Unity', 'Blender', 'MongoDB', 'PostgreSQL', 'Arduino']
+  const location = profile?.location ?? 'Neiva, Colombia'
+  const email = profile?.email ?? 'josemanuelossa26@gmail.com'
+  const photoUrl = 'https://raw.githubusercontent.com/JoseManuel261/Portafolio/refs/heads/main/Images/Jose.png'
 
   return (
     <>
       <Nav />
-      <main className="max-w-5xl mx-auto px-6 pt-32 pb-20">
+      <main>
 
-        {/* Header */}
-        <div className="mb-12 animate-fade-up opacity-0-init">
-          <p className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-2">Portafolio</p>
-          <h1 className="font-display text-5xl mb-3">Proyectos</h1>
-          <p className="text-[var(--text-muted)]">
-            {projects.length} proyecto{projects.length !== 1 ? 's' : ''} en total
-          </p>
-        </div>
-
-        {/* Search + Filters */}
-        <div className="mb-8 space-y-4">
-          <div className="relative">
-            <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-            <input
-              type="text"
-              placeholder="Buscar proyectos..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-white border border-[var(--border)] rounded-xl text-sm outline-none focus:border-[var(--text)] transition-colors placeholder:text-[var(--text-muted)]"
-            />
-          </div>
-
-          {/* Status filter */}
-          <div className="flex flex-wrap gap-2">
-            {statusOptions.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => setStatus(opt.value)}
-                className={`text-xs px-4 py-2 rounded-full border transition-all ${
-                  status === opt.value
-                    ? 'bg-[var(--text)] text-[var(--bg)] border-[var(--text)]'
-                    : 'border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--text)] hover:text-[var(--text)]'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Tag filter */}
-          {allTags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setSelectedTag('all')}
-                className={`text-xs px-3 py-1.5 rounded-lg border transition-all ${
-                  selectedTag === 'all'
-                    ? 'bg-[var(--surface)] border-[var(--text)] text-[var(--text)]'
-                    : 'border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]'
-                }`}
-              >
-                Todas las tecnologías
-              </button>
-              {allTags.map((tag) => (
-                <button
-                  key={tag}
-                  onClick={() => setSelectedTag(tag === selectedTag ? 'all' : tag)}
-                  className={`text-xs px-3 py-1.5 rounded-lg border transition-all ${
-                    selectedTag === tag
-                      ? 'bg-[var(--surface)] border-[var(--text)] text-[var(--text)]'
-                      : 'border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]'
-                  }`}
-                >
-                  {tag}
-                </button>
-              ))}
+        {/* ── Hero ── */}
+        <section className="min-h-screen flex flex-col justify-center max-w-5xl mx-auto px-6 pt-20 pb-10 relative">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-10">
+            {/* Left: text */}
+            <div className="flex-1 max-w-xl">
+              <p className="animate-fade-up delay-1 text-xs text-[var(--text-muted)] mb-8 tracking-[0.2em] uppercase">
+                Portafolio — {new Date().getFullYear()}
+              </p>
+              <div className="animate-fade-up delay-2">
+                <AnimatedName name={name} />
+              </div>
+              <p className="animate-fade-up delay-3 text-base text-[var(--text-muted)] font-light max-w-md leading-relaxed mb-2 mt-4">
+                {title}
+              </p>
+              <p className="animate-fade-up delay-4 text-sm text-[var(--text-muted)] max-w-sm leading-relaxed mb-8">
+                {bio}
+              </p>
+              <div className="animate-fade-up delay-5 flex flex-wrap items-center gap-3">
+                <Link href="/projects"
+                  className="inline-flex items-center gap-2 bg-[var(--text)] text-[var(--bg)] px-5 py-2.5 text-sm font-medium hover:bg-[var(--accent-hover)] transition-colors">
+                  Ver proyectos <ArrowRight size={14} />
+                </Link>
+                <a href="#contact"
+                  className="inline-flex items-center gap-2 border border-[var(--border)] text-[var(--text)] px-5 py-2.5 text-sm hover:bg-[var(--surface)] transition-colors">
+                  Hablemos
+                </a>
+                {profile?.github_url && (
+                  <a href={profile.github_url} target="_blank" rel="noopener noreferrer"
+                    className="p-2.5 border border-[var(--border)] hover:bg-[var(--surface)] transition-colors text-[var(--text-muted)]">
+                    <Github size={15} />
+                  </a>
+                )}
+              </div>
             </div>
-          )}
-        </div>
 
-        {/* Grid */}
-        {loading ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="aspect-square bg-[var(--surface)] rounded-2xl animate-pulse" />
-            ))}
+            {/* Right: photo */}
+            <div className="animate-fade-in delay-3 flex-shrink-0">
+              <div className="relative w-48 h-48 md:w-64 md:h-64">
+                <img
+                  src={photoUrl}
+                  alt={name}
+                  className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-500"
+                  style={{ filter: 'grayscale(20%)' }}
+                />
+                {/* Decorative offset border */}
+                <div className="absolute -bottom-3 -right-3 w-full h-full border border-[var(--highlight)] -z-10" />
+              </div>
+            </div>
           </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="font-display text-2xl text-[var(--text-muted)] mb-2">Sin resultados</p>
-            <p className="text-sm text-[var(--text-muted)]">Prueba con otro término o filtro</p>
+
+          {/* Scroll indicator */}
+          <div className="absolute right-6 top-1/2 -translate-y-1/2 hidden lg:flex flex-col items-center gap-4 opacity-20">
+            <div className="w-px h-16 bg-[var(--text)]" />
+            <p className="text-[10px] tracking-[0.3em] uppercase rotate-90 whitespace-nowrap text-[var(--text-muted)]">scroll</p>
+            <div className="w-px h-16 bg-[var(--text)]" />
           </div>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filtered.map((p) => (
-              <ProjectCard key={p.id} project={p} />
-            ))}
-          </div>
+        </section>
+
+        {/* ── Featured Projects ── */}
+        {projects.length > 0 && (
+          <section className="max-w-5xl mx-auto px-6 py-16 border-t border-[var(--border)]">
+            <div className="flex items-end justify-between mb-8">
+              <div>
+                <div className="section-line" />
+                <h2 className="font-display text-3xl italic">Trabajo destacado</h2>
+              </div>
+              <Link href="/projects"
+                className="text-xs text-[var(--text-muted)] hover:text-[var(--text)] flex items-center gap-1 transition-colors hover-line uppercase tracking-wider">
+                Ver todos <ArrowRight size={12} />
+              </Link>
+            </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {projects.map((p) => <ProjectCard key={p.id} project={p} />)}
+            </div>
+          </section>
         )}
+
+        {/* ── About ── */}
+        <section id="about" className="max-w-5xl mx-auto px-6 py-16 border-t border-[var(--border)] scroll-mt-20">
+          <div className="grid md:grid-cols-5 gap-12 items-start">
+            <div className="md:col-span-2">
+              <div className="section-line" />
+              <h2 className="font-display text-3xl italic mb-5">Sobre mí</h2>
+              <p className="text-[var(--text-muted)] leading-relaxed text-sm mb-5">{bio}</p>
+              <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] mb-6">
+                <MapPin size={11} /> {location}
+              </div>
+              <div className="flex items-center gap-2">
+                {profile?.github_url && (
+                  <a href={profile.github_url} target="_blank" rel="noopener noreferrer"
+                    className="p-2 border border-[var(--border)] hover:bg-[var(--surface)] transition-colors">
+                    <Github size={14} />
+                  </a>
+                )}
+                {profile?.linkedin_url && (
+                  <a href={profile.linkedin_url} target="_blank" rel="noopener noreferrer"
+                    className="p-2 border border-[var(--border)] hover:bg-[var(--surface)] transition-colors">
+                    <Linkedin size={14} />
+                  </a>
+                )}
+                <a href={`mailto:${email}`}
+                  className="p-2 border border-[var(--border)] hover:bg-[var(--surface)] transition-colors">
+                  <Mail size={14} />
+                </a>
+              </div>
+            </div>
+
+            <div className="md:col-span-3 space-y-8">
+              <div>
+                <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-[0.2em] mb-3">Stack</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {skills.map((skill: string) => (
+                    <span key={skill}
+                      className="text-xs px-2.5 py-1 border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--text)] hover:text-[var(--text)] transition-colors cursor-default">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-[0.2em] mb-3">Educación</p>
+                <div className="border-l-2 border-[var(--highlight)] pl-4">
+                  <p className="text-sm font-medium">Ingeniería de Software</p>
+                  <p className="text-sm text-[var(--text-muted)]">Fundación Escuela Tecnológica de Neiva</p>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">FET Neiva · En curso</p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-[0.2em] mb-3">Enfoque</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {['Desarrollo Web', 'IoT & Embebidos', 'Modelado 3D', 'Redes & Seguridad'].map(area => (
+                    <div key={area} className="text-xs text-[var(--text-muted)] flex items-center gap-2">
+                      <span className="w-1 h-1 rounded-full bg-[var(--highlight)] flex-shrink-0" />
+                      {area}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Contact ── */}
+        <section id="contact" className="max-w-5xl mx-auto px-6 py-16 border-t border-[var(--border)] scroll-mt-20">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8">
+            <div>
+              <div className="section-line" />
+              <h2 className="font-display text-3xl italic mb-3">¿Hablamos?</h2>
+              <p className="text-sm text-[var(--text-muted)] max-w-sm leading-relaxed">
+                Abierto a colaboraciones, proyectos académicos y pasantías. Siempre con disposición para algo interesante.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <a href={`mailto:${email}`}
+                className="inline-flex items-center gap-2 bg-[var(--text)] text-[var(--bg)] px-6 py-3 text-sm font-medium hover:bg-[var(--accent-hover)] transition-colors">
+                <Mail size={14} /> {email}
+              </a>
+              {profile?.linkedin_url && (
+                <a href={profile.linkedin_url} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 border border-[var(--border)] px-6 py-3 text-sm text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface)] transition-colors">
+                  <ExternalLink size={14} /> LinkedIn
+                </a>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="max-w-5xl mx-auto px-6 py-6 border-t border-[var(--border)]">
+          <div className="flex items-center justify-between text-[10px] text-[var(--text-muted)] tracking-widest uppercase">
+            <span>© {new Date().getFullYear()} {name}</span>
+            <span>Next.js · Supabase · Vercel</span>
+          </div>
+        </footer>
       </main>
     </>
   )
