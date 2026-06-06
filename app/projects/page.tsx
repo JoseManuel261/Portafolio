@@ -1,100 +1,122 @@
+'use client'
+import { useState, useEffect } from 'react'
 import Nav from '@/components/Nav'
-import { supabase } from '@/lib/supabase'
-import { ArrowLeft, Github, ExternalLink, Calendar } from 'lucide-react'
-import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import ProjectCard from '@/components/ProjectCard'
+import { supabase, type Project } from '@/lib/supabase'
+import { Search } from 'lucide-react'
 
-export const revalidate = 0
+const statusOptions = [
+  { value: 'all', label: 'Todos' },
+  { value: 'completed', label: 'Completados' },
+  { value: 'in-progress', label: 'En progreso' },
+  { value: 'archived', label: 'Archivados' },
+]
 
-export default async function ProjectDetail({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const { data: project } = await supabase
-    .from('projects').select('*').eq('id', id).single()
+export default function ProjectsPage() {
+  const [projects, setProjects] = useState<Project[]>([])
+  const [filtered, setFiltered] = useState<Project[]>([])
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('all')
+  const [selectedTag, setSelectedTag] = useState('all')
+  const [loading, setLoading] = useState(true)
+  const [allTags, setAllTags] = useState<string[]>([])
 
-  if (!project) notFound()
+  useEffect(() => {
+    async function load() {
+      const { data } = await supabase
+        .from('projects').select('*').order('created_at', { ascending: false })
+      const list = data ?? []
+      setProjects(list)
+      setFiltered(list)
+      const tags = Array.from(new Set(list.flatMap((p: Project) => p.tags ?? [])))
+      setAllTags(tags as string[])
+      setLoading(false)
+    }
+    load()
+  }, [])
 
-  const statusColor: Record<string, string> = {
-    completed: 'text-emerald-600',
-    'in-progress': 'text-amber-600',
-    archived: 'text-stone-400',
-  }
-  const statusLabel: Record<string, string> = {
-    completed: 'Completado',
-    'in-progress': 'En progreso',
-    archived: 'Archivado',
-  }
+  useEffect(() => {
+    let result = projects
+    if (status !== 'all') result = result.filter(p => p.status === status)
+    if (selectedTag !== 'all') result = result.filter(p => p.tags?.includes(selectedTag))
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      result = result.filter(p =>
+        p.title.toLowerCase().includes(q) ||
+        p.description.toLowerCase().includes(q) ||
+        p.tags?.some(t => t.toLowerCase().includes(q))
+      )
+    }
+    setFiltered(result)
+  }, [projects, status, selectedTag, search])
 
   return (
     <>
       <Nav />
-      <main className="max-w-3xl mx-auto px-6 pt-32 pb-20">
-
-        <Link href="/projects"
-          className="inline-flex items-center gap-2 text-xs text-[var(--text-muted)] hover:text-[var(--text)] transition-colors mb-10 hover-line uppercase tracking-wider">
-          <ArrowLeft size={12} /> Volver a proyectos
-        </Link>
-
-        {project.image_url && (
-          <div className="aspect-video mb-10 overflow-hidden border border-[var(--border)]">
-            <img src={project.image_url} alt={project.title} className="w-full h-full object-cover" />
-          </div>
-        )}
-
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-3">
-            <span className={`text-[10px] uppercase tracking-widest font-medium ${statusColor[project.status] ?? 'text-stone-400'}`}>
-              {statusLabel[project.status] ?? project.status}
-            </span>
-            {project.featured && (
-              <span className="text-[10px] text-[var(--text-muted)] tracking-widest uppercase">· Destacado</span>
-            )}
-          </div>
-          <h1 className="font-display text-4xl md:text-5xl leading-tight mb-4">{project.title}</h1>
-          <p className="text-[var(--text-muted)] leading-relaxed">{project.description}</p>
+      <main className="max-w-5xl mx-auto px-6 pt-32 pb-20">
+        <div className="mb-10">
+          <p className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-2">Portafolio</p>
+          <h1 className="font-display text-4xl mb-2">Proyectos</h1>
+          <p className="text-sm text-[var(--text-muted)]">{projects.length} proyecto{projects.length !== 1 ? 's' : ''} en total</p>
         </div>
 
-        {project.tags?.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-8 pb-8 border-b border-[var(--border)]">
-            {project.tags.map((tag: string) => (
-              <span key={tag} className="text-xs px-2.5 py-1 border border-[var(--border)] text-[var(--tag-text)]">
-                {tag}
-              </span>
+        <div className="mb-8 space-y-3">
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+            <input type="text" placeholder="Buscar proyectos..."
+              value={search} onChange={e => setSearch(e.target.value)}
+              className="w-full pl-9 pr-4 py-2.5 bg-white border border-[var(--border)] text-sm outline-none focus:border-[var(--text)] transition-colors" />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {statusOptions.map(opt => (
+              <button key={opt.value} onClick={() => setStatus(opt.value)}
+                className={`text-xs px-3 py-1.5 border transition-all ${
+                  status === opt.value
+                    ? 'bg-[var(--text)] text-[var(--bg)] border-[var(--text)]'
+                    : 'border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--text)] hover:text-[var(--text)]'
+                }`}>
+                {opt.label}
+              </button>
             ))}
           </div>
-        )}
+          {allTags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              <button onClick={() => setSelectedTag('all')}
+                className={`text-xs px-3 py-1 border transition-all ${
+                  selectedTag === 'all'
+                    ? 'bg-[var(--surface)] border-[var(--text)] text-[var(--text)]'
+                    : 'border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]'
+                }`}>
+                Todas
+              </button>
+              {allTags.map(tag => (
+                <button key={tag} onClick={() => setSelectedTag(tag === selectedTag ? 'all' : tag)}
+                  className={`text-xs px-3 py-1 border transition-all ${
+                    selectedTag === tag
+                      ? 'bg-[var(--surface)] border-[var(--text)] text-[var(--text)]'
+                      : 'border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]'
+                  }`}>
+                  {tag}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
-        {project.long_description && (
-          <div className="mb-10">
-            <div className="section-line" />
-            <h2 className="font-display text-xl mb-4">Descripción detallada</h2>
-            <p className="text-sm text-[var(--text-muted)] leading-relaxed whitespace-pre-line">
-              {project.long_description}
-            </p>
+        {loading ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1,2,3].map(i => <div key={i} className="aspect-square bg-[var(--surface)] animate-pulse" />)}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="font-display text-2xl text-[var(--text-muted)] mb-2">Sin resultados</p>
+            <p className="text-sm text-[var(--text-muted)]">Prueba con otro término o filtro</p>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filtered.map(p => <ProjectCard key={p.id} project={p} />)}
           </div>
         )}
-
-        <div className="flex flex-wrap gap-3">
-          {project.repo_url && (
-            <a href={project.repo_url} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 border border-[var(--border)] px-5 py-2.5 text-sm text-[var(--text-muted)] hover:text-[var(--text)] hover:border-[var(--text)] transition-colors">
-              <Github size={14} /> Ver código
-            </a>
-          )}
-          {project.live_url && (
-            <a href={project.live_url} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-[var(--text)] text-[var(--bg)] px-5 py-2.5 text-sm hover:bg-[var(--accent-hover)] transition-colors">
-              <ExternalLink size={14} /> Demo en vivo
-            </a>
-          )}
-        </div>
-
-        <div className="mt-12 pt-6 border-t border-[var(--border)]">
-          <p className="text-xs text-[var(--text-muted)] flex items-center gap-1.5">
-            <Calendar size={10} />
-            Agregado el {new Date(project.created_at).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}
-          </p>
-        </div>
-
       </main>
     </>
   )
