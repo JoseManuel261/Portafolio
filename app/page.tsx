@@ -1,36 +1,54 @@
 import Nav from '@/components/Nav'
 import ProjectCard from '@/components/ProjectCard'
 import { supabase } from '@/lib/supabase'
-import { Github, Linkedin, Mail, MapPin, ArrowRight, Download } from 'lucide-react'
+import { Github, Linkedin, Mail, MapPin, ArrowRight, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 
 async function getFeaturedProjects() {
   const { data } = await supabase
-    .from('projects')
-    .select('*')
-    .eq('featured', true)
-    .order('created_at', { ascending: false })
-    .limit(3)
+    .from('projects').select('*').eq('featured', true)
+    .order('created_at', { ascending: false }).limit(3)
   return data ?? []
 }
 
 async function getProfile() {
-  const { data } = await supabase
-    .from('profiles')
-    .select('*')
-    .single()
+  const { data } = await supabase.from('profiles').select('*').single()
   return data
+}
+
+function AnimatedName({ name }: { name: string }) {
+  const words = name.split(' ')
+  let charIndex = 0
+  return (
+    <h1 className="font-display leading-[0.95] tracking-tight mb-5">
+      {words.map((word, wi) => (
+        <span key={wi} className="block overflow-hidden">
+          <span className="block" style={{ animationDelay: `${wi * 0.12}s` }}>
+            {word.split('').map((char, ci) => {
+              const delay = (charIndex++ * 0.03) + 0.1
+              return (
+                <span key={ci} className="name-char"
+                  style={{ animationDelay: `${delay}s`, fontSize: wi === 0 ? 'clamp(3.5rem, 9vw, 7rem)' : 'clamp(2.5rem, 6vw, 5rem)' }}>
+                  {char}
+                </span>
+              )
+            })}
+          </span>
+        </span>
+      ))}
+    </h1>
+  )
 }
 
 export default async function Home() {
   const [projects, profile] = await Promise.all([getFeaturedProjects(), getProfile()])
 
-  const name = profile?.name ?? 'Joselin'
+  const name = profile?.name ?? 'Jose Manuel Ossa'
   const title = profile?.title ?? 'Software Engineering Student'
-  const bio = profile?.bio ?? 'Estudiante de Ingeniería de Software en FET Neiva, apasionada por el desarrollo web, IoT y el diseño de experiencias digitales.'
+  const bio = profile?.bio ?? 'Estudiante de Ingeniería de Software en FET Neiva. Construyo cosas para la web, IoT y mundos 3D.'
   const skills = profile?.skills ?? ['React', 'Next.js', 'Python', 'Unity', 'Blender', 'MongoDB', 'PostgreSQL', 'Arduino']
   const location = profile?.location ?? 'Neiva, Colombia'
-  const email = profile?.email ?? 'tu@email.com'
+  const email = profile?.email ?? 'josemanuelossa26@gmail.com'
 
   return (
     <>
@@ -38,113 +56,129 @@ export default async function Home() {
       <main>
 
         {/* ── Hero ── */}
-        <section className="min-h-screen flex flex-col justify-center max-w-5xl mx-auto px-6 pt-24 pb-16">
-          <div className="animate-fade-up opacity-0-init">
-            <p className="text-sm text-[var(--text-muted)] mb-6 tracking-widest uppercase font-medium">
-              Portafolio
+        <section className="min-h-screen flex flex-col justify-center max-w-5xl mx-auto px-6 pt-20 pb-10 relative">
+          <div className="max-w-3xl">
+            <p className="animate-fade-up delay-1 text-xs text-[var(--text-muted)] mb-8 tracking-[0.2em] uppercase">
+              Portafolio — {new Date().getFullYear()}
             </p>
-            <h1 className="font-display text-6xl md:text-8xl leading-none tracking-tight mb-6">
-              {name}
-              <span className="text-[var(--text-muted)]">.</span>
-            </h1>
-            <p className="text-xl md:text-2xl text-[var(--text-muted)] font-light max-w-xl leading-relaxed mb-10">
+            <AnimatedName name={name} />
+            <p className="animate-fade-up delay-3 text-lg text-[var(--text-muted)] font-light max-w-md leading-relaxed mb-3 mt-6">
               {title}
             </p>
-            <div className="flex flex-wrap items-center gap-4">
-              <Link
-                href="/projects"
-                className="inline-flex items-center gap-2 bg-[var(--text)] text-[var(--bg)] px-6 py-3 rounded-full text-sm font-medium hover:bg-[var(--accent-hover)] transition-colors"
-              >
-                Ver proyectos <ArrowRight size={15} />
+            <p className="animate-fade-up delay-4 text-sm text-[var(--text-muted)] max-w-sm leading-relaxed mb-10 italic">
+              {location}
+            </p>
+            <div className="animate-fade-up delay-5 flex flex-wrap items-center gap-3">
+              <Link href="/projects"
+                className="inline-flex items-center gap-2 bg-[var(--text)] text-[var(--bg)] px-5 py-2.5 text-sm font-medium hover:bg-[var(--accent-hover)] transition-colors">
+                Ver proyectos <ArrowRight size={14} />
               </Link>
-              <a
-                href="#contact"
-                className="inline-flex items-center gap-2 border border-[var(--border)] text-[var(--text)] px-6 py-3 rounded-full text-sm font-medium hover:bg-[var(--surface)] transition-colors"
-              >
-                Contacto
+              <a href="#contact"
+                className="inline-flex items-center gap-2 border border-[var(--border)] text-[var(--text)] px-5 py-2.5 text-sm hover:bg-[var(--surface)] transition-colors">
+                Hablemos
               </a>
+              {profile?.github_url && (
+                <a href={profile.github_url} target="_blank" rel="noopener noreferrer"
+                  className="p-2.5 border border-[var(--border)] hover:bg-[var(--surface)] transition-colors text-[var(--text-muted)]">
+                  <Github size={15} />
+                </a>
+              )}
             </div>
           </div>
 
-          {/* Scroll indicator */}
-          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-40 animate-bounce">
-            <div className="w-px h-12 bg-[var(--text-muted)]" />
+          {/* Decorative vertical text */}
+          <div className="absolute right-6 top-1/2 -translate-y-1/2 hidden lg:flex flex-col items-center gap-4 opacity-20">
+            <div className="w-px h-16 bg-[var(--text)]" />
+            <p className="text-[10px] tracking-[0.3em] uppercase rotate-90 whitespace-nowrap text-[var(--text-muted)]">
+              scroll
+            </p>
+            <div className="w-px h-16 bg-[var(--text)]" />
           </div>
         </section>
 
         {/* ── Featured Projects ── */}
         {projects.length > 0 && (
-          <section className="max-w-5xl mx-auto px-6 py-20">
-            <div className="flex items-end justify-between mb-10">
+          <section className="max-w-5xl mx-auto px-6 py-16 border-t border-[var(--border)]">
+            <div className="flex items-end justify-between mb-8">
               <div>
-                <p className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-2">Proyectos</p>
-                <h2 className="font-display text-4xl">Trabajo destacado</h2>
+                <div className="section-line" />
+                <h2 className="font-display text-3xl italic">Trabajo destacado</h2>
               </div>
-              <Link
-                href="/projects"
-                className="text-sm text-[var(--text-muted)] hover:text-[var(--text)] flex items-center gap-1.5 transition-colors"
-              >
-                Ver todos <ArrowRight size={14} />
+              <Link href="/projects"
+                className="text-xs text-[var(--text-muted)] hover:text-[var(--text)] flex items-center gap-1 transition-colors hover-line">
+                Ver todos <ArrowRight size={12} />
               </Link>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {projects.map((p) => (
-                <ProjectCard key={p.id} project={p} />
-              ))}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {projects.map((p) => <ProjectCard key={p.id} project={p} />)}
             </div>
           </section>
         )}
 
         {/* ── About ── */}
-        <section id="about" className="max-w-5xl mx-auto px-6 py-20 scroll-mt-20">
-          <div className="grid md:grid-cols-2 gap-16 items-start">
-            <div>
-              <p className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-2">Sobre mí</p>
-              <h2 className="font-display text-4xl mb-6">¿Quién soy?</h2>
-              <p className="text-[var(--text-muted)] leading-relaxed mb-6">{bio}</p>
-              <div className="flex items-center gap-2 text-sm text-[var(--text-muted)] mb-6">
-                <MapPin size={14} />
-                {location}
+        <section id="about" className="max-w-5xl mx-auto px-6 py-16 border-t border-[var(--border)] scroll-mt-20">
+          <div className="grid md:grid-cols-5 gap-12 items-start">
+            <div className="md:col-span-2">
+              <div className="section-line" />
+              <h2 className="font-display text-3xl italic mb-5">Sobre mí</h2>
+              <p className="text-[var(--text-muted)] leading-relaxed text-sm mb-5">{bio}</p>
+              <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] mb-6">
+                <MapPin size={11} /> {location}
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 {profile?.github_url && (
                   <a href={profile.github_url} target="_blank" rel="noopener noreferrer"
-                    className="p-2.5 border border-[var(--border)] rounded-lg hover:bg-[var(--surface)] transition-colors">
-                    <Github size={16} />
+                    className="p-2 border border-[var(--border)] hover:bg-[var(--surface)] transition-colors">
+                    <Github size={14} />
                   </a>
                 )}
                 {profile?.linkedin_url && (
                   <a href={profile.linkedin_url} target="_blank" rel="noopener noreferrer"
-                    className="p-2.5 border border-[var(--border)] rounded-lg hover:bg-[var(--surface)] transition-colors">
-                    <Linkedin size={16} />
+                    className="p-2 border border-[var(--border)] hover:bg-[var(--surface)] transition-colors">
+                    <Linkedin size={14} />
                   </a>
                 )}
                 <a href={`mailto:${email}`}
-                  className="p-2.5 border border-[var(--border)] rounded-lg hover:bg-[var(--surface)] transition-colors">
-                  <Mail size={16} />
+                  className="p-2 border border-[var(--border)] hover:bg-[var(--surface)] transition-colors">
+                  <Mail size={14} />
                 </a>
               </div>
             </div>
 
-            {/* Skills */}
-            <div>
-              <p className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-4">Tecnologías</p>
-              <div className="flex flex-wrap gap-2">
-                {skills.map((skill: string) => (
-                  <span key={skill}
-                    className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-lg text-[var(--text-muted)] hover:bg-[var(--surface)] hover:text-[var(--text)] transition-colors">
-                    {skill}
-                  </span>
-                ))}
+            <div className="md:col-span-3 space-y-8">
+              {/* Skills */}
+              <div>
+                <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-[0.2em] mb-3">Stack</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {skills.map((skill: string) => (
+                    <span key={skill}
+                      className="text-xs px-2.5 py-1 border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--text)] hover:text-[var(--text)] transition-colors cursor-default">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
               </div>
 
               {/* Education */}
-              <div className="mt-10">
-                <p className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-4">Educación</p>
-                <div className="border border-[var(--border)] rounded-xl p-5">
-                  <p className="font-medium text-sm mb-1">Ingeniería de Software</p>
+              <div>
+                <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-[0.2em] mb-3">Educación</p>
+                <div className="border-l-2 border-[var(--highlight)] pl-4">
+                  <p className="text-sm font-medium">Ingeniería de Software</p>
                   <p className="text-sm text-[var(--text-muted)]">Fundación Escuela Tecnológica de Neiva</p>
                   <p className="text-xs text-[var(--text-muted)] mt-1">FET Neiva · En curso</p>
+                </div>
+              </div>
+
+              {/* What I do */}
+              <div>
+                <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-[0.2em] mb-3">Enfoque</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {['Desarrollo Web', 'IoT & Embebidos', 'Modelado 3D', 'Redes & Seguridad'].map(area => (
+                    <div key={area} className="text-xs text-[var(--text-muted)] flex items-center gap-2">
+                      <span className="w-1 h-1 rounded-full bg-[var(--highlight)] flex-shrink-0" />
+                      {area}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -152,28 +186,35 @@ export default async function Home() {
         </section>
 
         {/* ── Contact ── */}
-        <section id="contact" className="max-w-5xl mx-auto px-6 py-20 scroll-mt-20">
-          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-3xl p-12 text-center">
-            <p className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-3">Contacto</p>
-            <h2 className="font-display text-4xl mb-4">¿Hablamos?</h2>
-            <p className="text-[var(--text-muted)] max-w-md mx-auto mb-8">
-              Abierta a colaboraciones, proyectos académicos, pasantías y cualquier idea interesante.
-            </p>
-            <a
-              href={`mailto:${email}`}
-              className="inline-flex items-center gap-2 bg-[var(--text)] text-[var(--bg)] px-8 py-3.5 rounded-full text-sm font-medium hover:bg-[var(--accent-hover)] transition-colors"
-            >
-              <Mail size={15} />
-              {email}
-            </a>
+        <section id="contact" className="max-w-5xl mx-auto px-6 py-16 border-t border-[var(--border)] scroll-mt-20">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8">
+            <div>
+              <div className="section-line" />
+              <h2 className="font-display text-3xl italic mb-3">¿Hablamos?</h2>
+              <p className="text-sm text-[var(--text-muted)] max-w-sm leading-relaxed">
+                Abierto a colaboraciones, proyectos académicos y pasantías. Siempre con disposición para algo interesante.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <a href={`mailto:${email}`}
+                className="inline-flex items-center gap-2 bg-[var(--text)] text-[var(--bg)] px-6 py-3 text-sm font-medium hover:bg-[var(--accent-hover)] transition-colors">
+                <Mail size={14} /> {email}
+              </a>
+              {profile?.linkedin_url && (
+                <a href={profile.linkedin_url} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 border border-[var(--border)] px-6 py-3 text-sm text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface)] transition-colors">
+                  <ExternalLink size={14} /> LinkedIn
+                </a>
+              )}
+            </div>
           </div>
         </section>
 
         {/* Footer */}
-        <footer className="max-w-5xl mx-auto px-6 py-8 border-t border-[var(--border)]">
-          <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
+        <footer className="max-w-5xl mx-auto px-6 py-6 border-t border-[var(--border)]">
+          <div className="flex items-center justify-between text-[10px] text-[var(--text-muted)] tracking-widest uppercase">
             <span>© {new Date().getFullYear()} {name}</span>
-            <span>Hecho con Next.js + Supabase</span>
+            <span>Next.js · Supabase · Vercel</span>
           </div>
         </footer>
 

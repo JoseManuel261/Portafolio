@@ -1,90 +1,67 @@
-import Link from 'next/link'
 import { ExternalLink, Github, Circle } from 'lucide-react'
 import type { Project } from '@/lib/supabase'
 
 const statusLabel: Record<string, { label: string; color: string }> = {
-  completed: { label: 'Completado', color: 'bg-emerald-100 text-emerald-700' },
-  'in-progress': { label: 'En progreso', color: 'bg-amber-100 text-amber-700' },
-  archived: { label: 'Archivado', color: 'bg-stone-100 text-stone-500' },
+  completed: { label: 'Completado', color: 'text-emerald-600' },
+  'in-progress': { label: 'En progreso', color: 'text-amber-600' },
+  archived: { label: 'Archivado', color: 'text-stone-400' },
 }
 
 export default function ProjectCard({ project }: { project: Project }) {
   const status = statusLabel[project.status] ?? statusLabel.completed
 
   return (
-    <article className="group relative bg-white border border-[var(--border)] rounded-2xl overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
+    <article className="group border border-[var(--border)] hover:border-[var(--text)] transition-all duration-300 bg-white">
       {/* Image or placeholder */}
       <div className="aspect-video bg-[var(--surface)] overflow-hidden">
         {project.image_url ? (
-          <img
-            src={project.image_url}
-            alt={project.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
+          <img src={project.image_url} alt={project.title}
+            className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <span className="font-display text-5xl text-[var(--border)]">
+            <span className="font-display text-6xl text-[var(--border)] italic">
               {project.title.charAt(0)}
             </span>
           </div>
         )}
       </div>
 
-      <div className="p-6">
-        {/* Status + Featured */}
-        <div className="flex items-center gap-2 mb-3">
-          <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${status.color}`}>
+      <div className="p-5">
+        <div className="flex items-center justify-between mb-2">
+          <span className={`text-[10px] uppercase tracking-widest font-medium ${status.color}`}>
             {status.label}
           </span>
           {project.featured && (
-            <span className="text-xs text-[var(--text-muted)] flex items-center gap-1">
-              <Circle size={6} className="fill-current" /> Destacado
-            </span>
+            <span className="text-[10px] text-[var(--text-muted)] tracking-widest uppercase">Destacado</span>
           )}
         </div>
 
-        <h3 className="font-display text-xl mb-2 leading-tight">{project.title}</h3>
-        <p className="text-sm text-[var(--text-muted)] leading-relaxed line-clamp-2 mb-4">
+        <h3 className="font-display text-lg italic mb-2 leading-tight">{project.title}</h3>
+        <p className="text-xs text-[var(--text-muted)] leading-relaxed line-clamp-2 mb-4">
           {project.description}
         </p>
 
-        {/* Tags */}
         {project.tags?.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-4">
+          <div className="flex flex-wrap gap-1 mb-4">
             {project.tags.map((tag) => (
-              <span
-                key={tag}
-                className="text-xs px-2.5 py-1 rounded-md"
-                style={{ background: 'var(--tag-bg)', color: 'var(--tag-text)' }}
-              >
+              <span key={tag} className="text-[10px] px-2 py-0.5 border border-[var(--border)] text-[var(--tag-text)]">
                 {tag}
               </span>
             ))}
           </div>
         )}
 
-        {/* Links */}
-        <div className="flex items-center gap-3 pt-2 border-t border-[var(--border)]">
+        <div className="flex items-center gap-3 pt-3 border-t border-[var(--border)]">
           {project.repo_url && (
-            <a
-              href={project.repo_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
-            >
-              <Github size={13} />
-              Código
+            <a href={project.repo_url} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-1 text-[10px] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors hover-line uppercase tracking-wider">
+              <Github size={11} /> Código
             </a>
           )}
           {project.live_url && (
-            <a
-              href={project.live_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
-            >
-              <ExternalLink size={13} />
-              Demo en vivo
+            <a href={project.live_url} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-1 text-[10px] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors hover-line uppercase tracking-wider">
+              <ExternalLink size={11} /> Demo
             </a>
           )}
         </div>
