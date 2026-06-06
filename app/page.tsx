@@ -140,7 +140,7 @@ export default async function Home() {
           <div className="flex items-end justify-between mb-8">
             <div>
               <div className="section-line" />
-              <h2 className="font-display text-3xl italic">Trabajo destacado</h2>
+              <h2 className="font-display text-3xl italic">Trabajos destacados</h2>
             </div>
             <Link href="/projects"
               className="text-xs text-[var(--text-muted)] hover:text-[var(--text)] flex items-center gap-1 transition-colors hover-line uppercase tracking-wider">
