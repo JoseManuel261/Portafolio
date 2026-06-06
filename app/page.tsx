@@ -3,6 +3,7 @@ import ProjectCard from '@/components/ProjectCard'
 import { supabase } from '@/lib/supabase'
 import { Github, Linkedin, Mail, MapPin, ArrowRight, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export const revalidate = 0
 
@@ -30,7 +31,10 @@ function AnimatedName({ name }: { name: string }) {
               const delay = (charIndex++ * 0.03) + 0.1
               return (
                 <span key={ci} className="name-char"
-                  style={{ animationDelay: `${delay}s`, fontSize: wi === 0 ? 'clamp(3.5rem, 9vw, 7rem)' : 'clamp(2.5rem, 6vw, 5rem)' }}>
+                  style={{
+                    animationDelay: `${delay}s`,
+                    fontSize: wi === 0 ? 'clamp(3rem, 8vw, 6rem)' : 'clamp(2rem, 5vw, 4rem)'
+                  }}>
                   {char}
                 </span>
               )
@@ -51,6 +55,7 @@ export default async function Home() {
   const skills = profile?.skills ?? ['React', 'Next.js', 'Python', 'Unity', 'Blender', 'MongoDB', 'PostgreSQL', 'Arduino']
   const location = profile?.location ?? 'Neiva, Colombia'
   const email = profile?.email ?? 'josemanuelossa26@gmail.com'
+  const photoUrl = 'https://raw.githubusercontent.com/JoseManuel261/Portafolio/main/Images/Jose.png'
 
   return (
     <>
@@ -59,41 +64,57 @@ export default async function Home() {
 
         {/* ── Hero ── */}
         <section className="min-h-screen flex flex-col justify-center max-w-5xl mx-auto px-6 pt-20 pb-10 relative">
-          <div className="max-w-3xl">
-            <p className="animate-fade-up delay-1 text-xs text-[var(--text-muted)] mb-8 tracking-[0.2em] uppercase">
-              Portafolio — {new Date().getFullYear()}
-            </p>
-            <AnimatedName name={name} />
-            <p className="animate-fade-up delay-3 text-lg text-[var(--text-muted)] font-light max-w-md leading-relaxed mb-3 mt-6">
-              {title}
-            </p>
-            <p className="animate-fade-up delay-4 text-sm text-[var(--text-muted)] max-w-sm leading-relaxed mb-10 italic">
-              {location}
-            </p>
-            <div className="animate-fade-up delay-5 flex flex-wrap items-center gap-3">
-              <Link href="/projects"
-                className="inline-flex items-center gap-2 bg-[var(--text)] text-[var(--bg)] px-5 py-2.5 text-sm font-medium hover:bg-[var(--accent-hover)] transition-colors">
-                Ver proyectos <ArrowRight size={14} />
-              </Link>
-              <a href="#contact"
-                className="inline-flex items-center gap-2 border border-[var(--border)] text-[var(--text)] px-5 py-2.5 text-sm hover:bg-[var(--surface)] transition-colors">
-                Hablemos
-              </a>
-              {profile?.github_url && (
-                <a href={profile.github_url} target="_blank" rel="noopener noreferrer"
-                  className="p-2.5 border border-[var(--border)] hover:bg-[var(--surface)] transition-colors text-[var(--text-muted)]">
-                  <Github size={15} />
+          <div className="flex flex-row items-start justify-between gap-10">
+            {/* Left: text */}
+            <div className="flex-1 max-w-xl">
+              <p className="animate-fade-up delay-1 text-xs text-[var(--text-muted)] mb-8 tracking-[0.2em] uppercase">
+                Portafolio — {new Date().getFullYear()}
+              </p>
+              <div className="animate-fade-up delay-2">
+                <AnimatedName name={name} />
+              </div>
+              <p className="animate-fade-up delay-3 text-base text-[var(--text-muted)] font-light max-w-md leading-relaxed mb-2 mt-4">
+                {title}
+              </p>
+              <p className="animate-fade-up delay-4 text-sm text-[var(--text-muted)] max-w-sm leading-relaxed mb-8">
+                {bio}
+              </p>
+              <div className="animate-fade-up delay-5 flex flex-wrap items-center gap-3">
+                <Link href="/projects"
+                  className="inline-flex items-center gap-2 bg-[var(--text)] text-[var(--bg)] px-5 py-2.5 text-sm font-medium hover:bg-[var(--accent-hover)] transition-colors">
+                  Ver proyectos <ArrowRight size={14} />
+                </Link>
+                <a href="#contact"
+                  className="inline-flex items-center gap-2 border border-[var(--border)] text-[var(--text)] px-5 py-2.5 text-sm hover:bg-[var(--surface)] transition-colors">
+                  Hablemos
                 </a>
-              )}
+                {profile?.github_url && (
+                  <a href={profile.github_url} target="_blank" rel="noopener noreferrer"
+                    className="p-2.5 border border-[var(--border)] hover:bg-[var(--surface)] transition-colors text-[var(--text-muted)]">
+                    <Github size={15} />
+                  </a>
+                )}
+              </div>
+            </div>
+
+            {/* Right: photo */}
+            <div className="animate-fade-in delay-3 flex-shrink-0 mr-20 mt-20">
+              <div className="relative w-40 h-52">
+                <img
+                  src={photoUrl}
+                  alt={name}
+                  className="w-full h-full object-cover object-top"
+                  style={{ filter: 'grayscale(25%) contrast(1.05)' }}
+                />
+                <div className="absolute -bottom-2 -left-2 w-full h-full border border-[var(--border)] -z-10" />
+              </div>
             </div>
           </div>
 
-          {/* Decorative vertical text */}
+          {/* Scroll indicator */}
           <div className="absolute right-6 top-1/2 -translate-y-1/2 hidden lg:flex flex-col items-center gap-4 opacity-20">
             <div className="w-px h-16 bg-[var(--text)]" />
-            <p className="text-[10px] tracking-[0.3em] uppercase rotate-90 whitespace-nowrap text-[var(--text-muted)]">
-              scroll
-            </p>
+            <p className="text-[10px] tracking-[0.3em] uppercase rotate-90 whitespace-nowrap text-[var(--text-muted)]">scroll</p>
             <div className="w-px h-16 bg-[var(--text)]" />
           </div>
         </section>
@@ -107,7 +128,7 @@ export default async function Home() {
                 <h2 className="font-display text-3xl italic">Trabajo destacado</h2>
               </div>
               <Link href="/projects"
-                className="text-xs text-[var(--text-muted)] hover:text-[var(--text)] flex items-center gap-1 transition-colors hover-line">
+                className="text-xs text-[var(--text-muted)] hover:text-[var(--text)] flex items-center gap-1 transition-colors hover-line uppercase tracking-wider">
                 Ver todos <ArrowRight size={12} />
               </Link>
             </div>
@@ -148,7 +169,6 @@ export default async function Home() {
             </div>
 
             <div className="md:col-span-3 space-y-8">
-              {/* Skills */}
               <div>
                 <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-[0.2em] mb-3">Stack</p>
                 <div className="flex flex-wrap gap-1.5">
@@ -161,7 +181,6 @@ export default async function Home() {
                 </div>
               </div>
 
-              {/* Education */}
               <div>
                 <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-[0.2em] mb-3">Educación</p>
                 <div className="border-l-2 border-[var(--highlight)] pl-4">
@@ -171,7 +190,6 @@ export default async function Home() {
                 </div>
               </div>
 
-              {/* What I do */}
               <div>
                 <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-[0.2em] mb-3">Enfoque</p>
                 <div className="grid grid-cols-2 gap-2">
@@ -219,7 +237,6 @@ export default async function Home() {
             <span>Next.js · Supabase · Vercel</span>
           </div>
         </footer>
-
       </main>
     </>
   )
