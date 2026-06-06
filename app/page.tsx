@@ -65,7 +65,7 @@ export default async function Home() {
 
         {/* ── Hero ── */}
         <section className="min-h-screen flex flex-col justify-center max-w-5xl mx-auto px-6 pt-20 pb-10 relative">
-          <div className="flex flex-row items-start justify-between gap-10">
+          <div className="flex flex-col-reverse md:flex-row md:items-start md:justify-between gap-8">
             {/* Left: text */}
             <div className="flex-1 max-w-xl">
               <p className="animate-fade-up delay-1 text-xs text-[var(--text-muted)] mb-8 tracking-[0.2em] uppercase">
@@ -100,7 +100,7 @@ export default async function Home() {
 
 
             {/* Right: photo + CV */}
-            <div className="animate-fade-in delay-3 flex-shrink-0 mr-20 mt-20">
+            <div className="animate-fade-in delay-3 flex-shrink-0 md:mr-20 md:mt-20 flex flex-col items-center md:items-start">
               <div className="relative w-40 h-52">
                 <img
                   src={photoUrl}

@@ -3,11 +3,12 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { LayoutDashboard, LogOut } from 'lucide-react'
+import { LayoutDashboard, LogOut, Menu, X } from 'lucide-react'
 
 export default function Nav() {
   const [scrolled, setScrolled] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const pathname = usePathname()
 
   useEffect(() => {
@@ -17,12 +18,8 @@ export default function Nav() {
   }, [])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAdmin(!!session)
-    })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
-      setIsAdmin(!!session)
-    })
+    supabase.auth.getSession().then(({ data: { session } }) => setIsAdmin(!!session))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => setIsAdmin(!!session))
     return () => subscription.unsubscribe()
   }, [])
 
@@ -39,14 +36,15 @@ export default function Nav() {
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-      scrolled ? 'bg-[var(--bg)]/80 backdrop-blur-lg border-b border-[var(--border)]' : ''
+      scrolled || menuOpen ? 'bg-[var(--bg)]/95 backdrop-blur-lg border-b border-[var(--border)]' : ''
     }`}>
-      <nav className="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">
+      <nav className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
         <Link href="/" className="font-display text-xl italic tracking-tight hover:opacity-50 transition-opacity">
           JM.
         </Link>
 
-        <div className="flex items-center gap-7">
+        {/* Desktop links */}
+        <div className="hidden md:flex items-center gap-7">
           {links.map((link) => (
             <Link key={link.href} href={link.href}
               className={`text-sm hover-line transition-colors ${
@@ -55,7 +53,6 @@ export default function Nav() {
               {link.label}
             </Link>
           ))}
-
           {isAdmin ? (
             <div className="flex items-center gap-2 pl-4 border-l border-[var(--border)]">
               <Link href="/admin/dashboard"
@@ -74,7 +71,37 @@ export default function Nav() {
             </Link>
           )}
         </div>
+
+        {/* Mobile menu button */}
+        <button className="md:hidden p-2 text-[var(--text-muted)]" onClick={() => setMenuOpen(o => !o)}>
+          {menuOpen ? <X size={18} /> : <Menu size={18} />}
+        </button>
       </nav>
+
+      {/* Mobile menu */}
+      {menuOpen && (
+        <div className="md:hidden bg-[var(--bg)] border-t border-[var(--border)] px-6 py-4 flex flex-col gap-4">
+          {links.map((link) => (
+            <Link key={link.href} href={link.href}
+              onClick={() => setMenuOpen(false)}
+              className="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors py-1">
+              {link.label}
+            </Link>
+          ))}
+          {isAdmin && (
+            <>
+              <Link href="/admin/dashboard" onClick={() => setMenuOpen(false)}
+                className="text-sm text-[var(--text-muted)] hover:text-[var(--text)] flex items-center gap-2 py-1">
+                <LayoutDashboard size={13} /> Dashboard
+              </Link>
+              <button onClick={handleLogout}
+                className="text-sm text-[var(--text-muted)] hover:text-[var(--text)] flex items-center gap-2 py-1 text-left">
+                <LogOut size={13} /> Cerrar sesión
+              </button>
+            </>
+          )}
+        </div>
+      )}
     </header>
   )
 }
