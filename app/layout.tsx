@@ -1,24 +1,24 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import AIChat from '@/components/AIChat'
 
 export const metadata: Metadata = {
-  title: 'Joselin | Software Engineer',
-  description: 'Portfolio and project repository of Joselin, Software Engineering student at FET Neiva.',
+  title: 'Jose Manuel Ossa | Software Engineer',
+  description: 'Portafolio y repositorio de proyectos de Jose Manuel Ossa Martínez.',
   openGraph: {
-    title: 'Joselin | Software Engineer',
-    description: 'Portfolio, CV and project showcase.',
+    title: 'Jose Manuel Ossa | Software Engineer',
+    description: 'Portafolio, CV y proyectos.',
     type: 'website',
   },
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
-      <body>{children}</body>
+      <body>
+        {children}
+        <AIChat />
+      </body>
     </html>
   )
 }

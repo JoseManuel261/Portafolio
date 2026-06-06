@@ -98,7 +98,7 @@ export default async function Home() {
               </div>
             </div>
 
-            {/* Right: photo */}
+
             {/* Right: photo + CV */}
             <div className="animate-fade-in delay-3 flex-shrink-0 mr-20 mt-20">
               <div className="relative w-40 h-52">
