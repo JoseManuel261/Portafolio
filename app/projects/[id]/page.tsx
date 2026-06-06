@@ -6,9 +6,10 @@ import { notFound } from 'next/navigation'
 
 export const revalidate = 0
 
-export default async function ProjectDetail({ params }: { params: { id: string } }) {
+export default async function ProjectDetail({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const { data: project } = await supabase
-    .from('projects').select('*').eq('id', params.id).single()
+    .from('projects').select('*').eq('id', id).single()
 
   if (!project) notFound()
 
