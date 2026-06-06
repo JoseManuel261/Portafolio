@@ -98,21 +98,3 @@ AS $$
   SELECT * FROM profiles WHERE username = p_username LIMIT 1;
 $$;
 
--- ══════════════════════════════════════════════
--- PERFIL INICIAL: Joselin (ejemplo)
--- ══════════════════════════════════════════════
--- Primero necesitas crear un usuario en Authentication,
--- luego reemplaza 'REEMPLAZA_CON_USER_UUID' con su ID.
--- INSERT INTO profiles (id, username, name, title, bio, email, github_url, linkedin_url, location, skills)
--- VALUES (
---   'REEMPLAZA_CON_USER_UUID', -- El UUID del usuario en auth.users
---   'joselin',
---   'Joselin',
---   'Software Engineering Student',
---   'Estudiante de Ingeniería de Software en FET Neiva, apasionada por el desarrollo web, IoT, 3D y el diseño de experiencias digitales.',
---   'tu@email.com',
---   'https://github.com/tu_usuario',
---   'https://linkedin.com/in/tu_usuario',
---   'Neiva, Huila, Colombia',
---   ARRAY['React', 'Next.js', 'TypeScript', 'Python', 'Unity', 'Blender', 'MongoDB', 'PostgreSQL', 'Arduino', 'GNS3']
--- );

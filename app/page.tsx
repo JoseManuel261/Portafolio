@@ -4,6 +4,8 @@ import { supabase } from '@/lib/supabase'
 import { Github, Linkedin, Mail, MapPin, ArrowRight, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 
+export const revalidate = 0
+
 async function getFeaturedProjects() {
   const { data } = await supabase
     .from('projects').select('*').eq('featured', true)
