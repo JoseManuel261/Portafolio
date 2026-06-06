@@ -12,7 +12,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 // Types
 export type Project = {
   id: string
-  user_id: string
   title: string
   description: string
   long_description?: string
@@ -28,7 +27,6 @@ export type Project = {
 
 export type Profile = {
   id: string
-  username: string
   name: string
   title: string
   bio: string
@@ -37,6 +35,5 @@ export type Profile = {
   linkedin_url?: string
   location: string
   skills: string[]
-  created_at: string
   updated_at: string
 }

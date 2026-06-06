@@ -7,9 +7,7 @@ import {
   ExternalLink, Github, X, Check, AlertCircle
 } from 'lucide-react'
 
-type ProjectForm = Omit<Project, 'id' | 'created_at' | 'updated_at' | 'user_id'> & { user_id?: string }
-
-const emptyProject: ProjectForm = {
+const emptyProject: Omit<Project, 'id' | 'created_at' | 'updated_at'> = {
   title: '',
   description: '',
   long_description: '',
@@ -27,7 +25,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<Project | null>(null)
-  const [form, setForm] = useState<ProjectForm>({ ...emptyProject })
+  const [form, setForm] = useState({ ...emptyProject })
   const [tagInput, setTagInput] = useState('')
   const [saving, setSaving] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -41,12 +39,7 @@ export default function Dashboard() {
   const load = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { router.push('/admin'); return }
-    const userId = session.user.id
-    const { data } = await supabase
-      .from('projects')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
+    const { data } = await supabase.from('projects').select('*').order('created_at', { ascending: false })
     setProjects(data ?? [])
     setLoading(false)
   }, [router])
@@ -96,11 +89,7 @@ export default function Dashboard() {
       return
     }
     setSaving(true)
-    const { data: { session } } = await supabase.auth.getSession()
-    const userId = session?.user?.id
-    if (!userId) { showToast('Sesión expirada', 'error'); setSaving(false); return }
-
-    const payload = { ...form, user_id: userId, updated_at: new Date().toISOString() }
+    const payload = { ...form, updated_at: new Date().toISOString() }
     if (editing) {
       const { error } = await supabase.from('projects').update(payload).eq('id', editing.id)
       if (error) showToast('Error al guardar', 'error')
@@ -114,8 +103,6 @@ export default function Dashboard() {
   }
 
   async function toggleFeatured(p: Project) {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (session?.user?.id !== p.user_id) return
     await supabase.from('projects').update({ featured: !p.featured }).eq('id', p.id)
     load()
   }
